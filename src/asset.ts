@@ -1,36 +1,55 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { Utility } from './utility';
+import axios from 'axios';
+interface AssetData {
+    uri: vscode.Uri | string;
+    title: string;
+}
+
 
 export default class Asset {
-    public readonly TYPE_URL_IMAGE = 'url';
-    public readonly TYPE_DEFAULT = 'default';
 
-    public constructor(private context: vscode.ExtensionContext) {
+    private assetData: AssetData[];
+    private page = 1
+    private static instance: Asset;
+
+    private constructor(private context: vscode.ExtensionContext) {
+        const images = this.getDefaultImages() || [];
+        this.assetData = images.map(uri => ({
+            uri,
+            title: '小哥哥，小哥哥，代码写久了，该休息啦~'
+        }))
+        this.fetchData()
     }
 
-    public getImageUri(): vscode.Uri | string {
-        const type: string = this.getConfigType();
-        let images: vscode.Uri[] | string[];
 
-        if (type === this.TYPE_URL_IMAGE) {
-            images = this.getCustomImages();
-        } else {
-            images = this.getDefaultImages();
+    public static getInstance(context: vscode.ExtensionContext) {
+        if (!Asset.instance) {
+        Asset.instance = new Asset(context);
         }
-        // user forget setting customImages, get default images
-        if (images.length === 0) {
-            images = this.getDefaultImages();
-        }
-        const image = this.getRandomOne(images);
-
-        return image;
+        return Asset.instance;
     }
 
-    protected getRandomOne(images: string[] | vscode.Uri[]): string | vscode.Uri {
-        const n = Math.floor(Math.random() * images.length + 1) - 1;
-        return images[n];
+    private fetchData() {
+        axios.get(`https://gank.io/api/v2/data/category/Girl/type/Girl/page/${this.page}/count/50`)
+            .then((res : any) => {
+                const gankData: any = res.data
+                const gankAssetData = (gankData.data || []).map((item: any) => ({
+                    uri: item.url,
+                    title: '小哥哥，小哥哥，代码写久了，该休息啦~'
+                }))
+                this.assetData = this.assetData.concat(gankAssetData)
+                this.page++
+                if (this.page <= gankData.page_count) {
+                    this.fetchData()
+                }
+            });
+    }
+
+    public getData(): AssetData {
+        const n = Math.floor(Math.random() * this.assetData.length + 1) - 1;
+        return this.assetData[n];
     }
 
     protected getDefaultImages(): vscode.Uri[] {
@@ -53,18 +72,5 @@ export default class Asset {
 
     protected getDefaultYcyImagePath() {
         return path.join(this.context.extensionPath, 'images/ycy');
-    }
-
-
-    protected getConfigType(): string {
-        return Utility.getConfiguration().get<string>('type', 'default');
-    }
-
-    protected getCustomImages() {
-        return Utility.getConfiguration().get<string[]>('customImages', []);
-    }
-
-    public getTitle(): string {
-        return Utility.getConfiguration().get<string>('title', '');
     }
 }
