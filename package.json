@@ -3,7 +3,7 @@
     "displayName": "妹子陪伴你",
     "description": "写代码不再孤单",
     "version": "0.0.1",
-    "publisher": "DavidSongzw",
+    "publisher": "szw",
     "icon": "logo.jpg",
     "engines": {
         "vscode": "^1.30.0"
