@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import axios from 'axios';
+
 interface AssetData {
     uri: vscode.Uri | string;
     title: string;
@@ -11,7 +11,6 @@ interface AssetData {
 export default class Asset {
 
     private assetData: AssetData[];
-    private page = 1
     private static instance: Asset;
 
     private constructor(private context: vscode.ExtensionContext) {
@@ -26,25 +25,24 @@ export default class Asset {
 
     public static getInstance(context: vscode.ExtensionContext) {
         if (!Asset.instance) {
-        Asset.instance = new Asset(context);
+            Asset.instance = new Asset(context);
         }
         return Asset.instance;
     }
 
     private fetchData() {
-        axios.get(`https://gank.io/api/v2/data/category/Girl/type/Girl/page/${this.page}/count/50`)
-            .then((res : any) => {
-                const gankData: any = res.data
-                const gankAssetData = (gankData.data || []).map((item: any) => ({
-                    uri: item.url,
-                    title: '小哥哥，小哥哥，代码写久了，该休息啦~'
-                }))
-                this.assetData = this.assetData.concat(gankAssetData)
-                this.page++
-                if (this.page <= gankData.page_count) {
-                    this.fetchData()
-                }
-            });
+        const imageUrls = [
+            'https://cdn.seovx.com/?mom=302',
+            'https://cdn.seovx.com/d/?mom=302',
+            'https://cdn.seovx.com/ha/?mom=302'
+        ];
+
+        const newAssetData = imageUrls.map((url) => ({
+            uri: url,
+            title: '小哥哥，小哥哥，代码写久了，该休息啦~'
+        }));
+
+        this.assetData = this.assetData.concat(newAssetData);
     }
 
     public getData(): AssetData {
